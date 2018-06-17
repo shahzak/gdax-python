@@ -76,25 +76,25 @@ class WebsocketClient(object):
 
         self.ws.send(json.dumps(sub_params))
 
-def keepalive(self, interval=30):
-    while not self.stop:
-        if self.ws:
-            self.ws.ping("keepalive")
-            time.sleep(interval)
+    def keepalive(self, interval=30):
+        while not self.stop:
+            if self.ws:
+                self.ws.ping("keepalive")
+                time.sleep(interval)
 
-# create a thread before the while loop in the _listen method
-def _listen(self):
-    Thread(target=self.keepalive).start()
-    while not self.stop:
-        try:
-            data = self.ws.recv()
-            msg = json.loads(data)
-        except ValueError as e:
-            self.on_error(e)
-        except Exception as e:
-            self.on_error(e)
-        else:
-            self.on_message(msg)
+    # create a thread before the while loop in the _listen method
+    def _listen(self):
+        Thread(target=self.keepalive).start()
+        while not self.stop:
+            try:
+                data = self.ws.recv()
+                msg = json.loads(data)
+            except ValueError as e:
+                self.on_error(e)
+            except Exception as e:
+                self.on_error(e)
+            else:
+                self.on_message(msg)
 
     def _disconnect(self):
         try:
