@@ -11,6 +11,7 @@ import base64
 import hmac
 import hashlib
 import time
+import logging
 from threading import Thread
 from websocket import create_connection, WebSocketConnectionClosedException
 from pymongo import MongoClient
@@ -111,11 +112,11 @@ class WebsocketClient(object):
 
     def on_open(self):
         if self.should_print:
-            print("-- Subscribed! --\n")
+            logging.info("-- Subscribed! --\n")
 
     def on_close(self):
         if self.should_print:
-            print("\n-- Socket Closed --")
+            logging.info("\n-- Socket Closed --")
 
     def on_message(self, msg):
         if self.should_print:
@@ -125,8 +126,8 @@ class WebsocketClient(object):
 
     def on_error(self, e, data=None):
         self.error = e
-        self.stop = True
-        print('{} - data: {}'.format(e, data))
+        self.stop = False
+        logging.error('Error on Recieve: {} - data: {}'.format(e, data))
 
 
 if __name__ == "__main__":
@@ -140,14 +141,14 @@ if __name__ == "__main__":
             self.url = "wss://ws-feed.gdax.com/"
             self.products = ["BTC-USD", "ETH-USD"]
             self.message_count = 0
-            print("Let's count the messages!")
+            logging.info("Let's count the messages!")
 
         def on_message(self, msg):
             print(json.dumps(msg, indent=4, sort_keys=True))
             self.message_count += 1
 
         def on_close(self):
-            print("-- Goodbye! --")
+            logging.info("-- Goodbye! --")
 
 
     wsClient = MyWebsocketClient()
