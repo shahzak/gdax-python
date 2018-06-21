@@ -130,14 +130,14 @@ class WebsocketClient(object):
     def on_error(self, e, data=None):
         self.error = e
         logging.error('Error on Recieve {} - data: {}'.format(e, data))
-        if self.reconnect_attempts < self.reconnect_attempts_max
+        if self.reconnect_attempts < self.reconnect_attempts_max:
             self.stop = False
             logging.error('Trying to reconnect')
             self._disconnect(False) #disconnect but don't close this client
            # time.sleep(1) #wait a sec before trying to reconnect
             self._connect()
             self.reconnect_attempts += 1
-        else
+        else:
             self.stop = True
             logging.error('Reached maximum reconnect attempts. Closing')
 
