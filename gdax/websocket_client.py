@@ -136,7 +136,7 @@ class WebsocketClient(object):
             self._disconnect(False) #disconnect but don't close this client
            # time.sleep(1) #wait a sec before trying to reconnect
             self._connect()
-            self.reconnect_attempts++
+            self.reconnect_attempts += 1
         else
             self.stop = True
             logging.error('Reached maximum reconnect attempts. Closing')
