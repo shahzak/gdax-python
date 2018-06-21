@@ -20,7 +20,7 @@ from gdax.gdax_auth import get_auth_headers
 
 class WebsocketClient(object):
     def __init__(self, url="wss://ws-feed.gdax.com", products=None, message_type="subscribe", mongo_collection=None,
-                 should_print=True, auth=False, api_key="", api_secret="", api_passphrase="", channels=None):
+                 should_print=True, auth=False, api_key="", api_secret="", api_passphrase="", channels=None, reconnect_attempts_max=50):
         self.url = url
         self.products = products
         self.channels = channels
@@ -35,6 +35,8 @@ class WebsocketClient(object):
         self.api_passphrase = api_passphrase
         self.should_print = should_print
         self.mongo_collection = mongo_collection
+        self.reconnect_attempts_max = reconnect_attempts_max
+        self.reconnect_attempts = 0
 
     def start(self):
         def _go():
@@ -91,20 +93,21 @@ class WebsocketClient(object):
                 data = self.ws.recv()
                 msg = json.loads(data)
             except ValueError as e:
-                self.on_error(e)
+                self.on_error(e, data)
             except Exception as e:
-                self.on_error(e)
+                self.on_error(e, data)
             else:
                 self.on_message(msg)
 
-    def _disconnect(self):
+    def _disconnect(self, closeClient=True):
         try:
             if self.ws:
                 self.ws.close()
         except WebSocketConnectionClosedException as e:
             pass
 
-        self.on_close()
+        if closeClient:
+            self.on_close()
 
     def close(self):
         self.stop = True
@@ -126,8 +129,17 @@ class WebsocketClient(object):
 
     def on_error(self, e, data=None):
         self.error = e
-        self.stop = False
-        logging.error('Error on Recieve: {} - data: {}'.format(e, data))
+        logging.error('Error on Recieve {} - data: {}'.format(e, data))
+        if self.reconnect_attempts < self.reconnect_attempts_max
+            self.stop = False
+            logging.error('Trying to reconnect')
+            self._disconnect(False) #disconnect but don't close this client
+           # time.sleep(1) #wait a sec before trying to reconnect
+            self._connect()
+            self.reconnect_attempts++
+        else
+            self.stop = True
+            logging.error('Reached maximum reconnect attempts. Closing')
 
 
 if __name__ == "__main__":
