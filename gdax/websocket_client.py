@@ -20,7 +20,7 @@ from gdax.gdax_auth import get_auth_headers
 
 class WebsocketClient(object):
     def __init__(self, url="wss://ws-feed.gdax.com", products=None, message_type="subscribe", mongo_collection=None,
-                 should_print=True, auth=False, api_key="", api_secret="", api_passphrase="", channels=None, reconnect_attempts_max=50):
+                 should_print=True, auth=False, api_key="", api_secret="", api_passphrase="", channels=None, reconnect_attempts_max=500):
         self.url = url
         self.products = products
         self.channels = channels
@@ -87,7 +87,7 @@ class WebsocketClient(object):
 
     # create a thread before the while loop in the _listen method
     def _listen(self):
-        Thread(target=self.keepalive).start()
+        #Thread(target=self.keepalive).start()
         while not self.stop:
             try:
                 data = self.ws.recv()
@@ -103,6 +103,7 @@ class WebsocketClient(object):
         try:
             if self.ws:
                 self.ws.close()
+                logging.info("-- Web socket disconnected --\n")
         except WebSocketConnectionClosedException as e:
             pass
 
