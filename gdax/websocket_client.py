@@ -26,6 +26,8 @@ class WebsocketClient(object):
         self.channels = channels
         self.type = message_type
         self.stop = False
+        self.stopPing = False
+        self.pingThread = None
         self.error = None
         self.ws = None
         self.thread = None
@@ -75,25 +77,33 @@ class WebsocketClient(object):
             sub_params['passphrase'] = self.api_passphrase
             sub_params['timestamp'] = timestamp
 
-        self.ws = create_connection(self.url)
+        self.ws = create_connection(self.url, timeout=60)
 
         self.ws.send(json.dumps(sub_params))
 
+        self.pingThread = Thread(target=self.keepalive)
+        self.pingThread.start() #start pinging to keep connection alive
+
     def keepalive(self, interval=30):
-        while not self.stop:
+        logging.info('Starting ping')
+        while not self.stopPing:
             if self.ws:
-                self.ws.ping("keepalive")
+                try:
+                    self.ws.ping("keepalive")
+                except Exception as e:
+                    logging.error('Error sending ping {}'.format(e))
+                    self.stopPing = True;
                 time.sleep(interval)
 
     # create a thread before the while loop in the _listen method
     def _listen(self):
-        #Thread(target=self.keepalive).start()
+        
         while not self.stop:
             try:
                 data = self.ws.recv()
                 msg = json.loads(data)
             except ValueError as e:
-                self.on_error(e, data)
+                logging.error('Error Interpreting message as JSON {} - data: {}'.format(e, data))
             except Exception as e:
                 self.on_error(e, data)
             else:
@@ -102,6 +112,8 @@ class WebsocketClient(object):
     def _disconnect(self, closeClient=True):
         try:
             if self.ws:
+                self.stopPing = True;
+                self.pingThread.join()
                 self.ws.close()
                 logging.info("-- Web socket disconnected --\n")
         except WebSocketConnectionClosedException as e:
@@ -120,7 +132,7 @@ class WebsocketClient(object):
 
     def on_close(self):
         if self.should_print:
-            logging.info("\n-- Socket Closed --")
+            logging.info("\n-- GDAX Web Socket Client Closed --")
 
     def on_message(self, msg):
         if self.should_print:
