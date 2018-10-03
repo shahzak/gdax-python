@@ -77,7 +77,7 @@ class WebsocketClient(object):
             sub_params['passphrase'] = self.api_passphrase
             sub_params['timestamp'] = timestamp
 
-        self.ws = create_connection(self.url, timeout=60)
+        self.ws = create_connection(self.url, timeout=120)
 
         self.ws.send(json.dumps(sub_params))
 
